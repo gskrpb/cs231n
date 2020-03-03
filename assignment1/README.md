@@ -1,2 +1,2 @@
 
-部分作业的关键代码在assignment2的cs231n/layers.py里面
+部分作业的关键代码的参考答案在assignment2的cs231n/layers.py里面
