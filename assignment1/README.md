@@ -143,6 +143,8 @@ $\color{blue}{\textit Your Explanation:}$The decision boundary of the k-NN class
 
 二、Multiclass Support Vector Machine（支持向量机SVM）
 
+线性分类器的思想是，训练集不是拿来比对的，而是拿来对 W 进行训练，使之存下一个所有有同一个标签下的图像的“模板”，等 W 的训练完成后，我们大可抛弃掉整个训练集，用 test 集与这个 W 做比较，显然这种方法高效得多。
+
 0.导入数据
 
 1.拆数据：50000训练集->49000训练集、1000验证集、500发展集（49000训练集随机选择），10000测试集->1000测试集
@@ -282,4 +284,6 @@ $\color{blue}{\textit Your Answer:}$ There are some characteristics to describe,
 3.svm在图像分类上的准确率并不算高。
 
 
-三、
+三、Softmax
+
+
