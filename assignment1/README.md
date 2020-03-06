@@ -136,6 +136,10 @@ $\color{blue}{\textit Your Explanation:}$The decision boundary of the k-NN class
 
 2.kNN实在是太菜了，这就是个介绍而已。
 
+参考：
+
+[【学习笔记】cs231n-assignment1-kNN](https://blog.csdn.net/KammyIsTheBest/article/details/80200154)
+
 
 二、Multiclass Support Vector Machine（支持向量机SVM）
 
@@ -150,6 +154,8 @@ $\color{blue}{\textit Your Explanation:}$The decision boundary of the k-NN class
 作业部分：
 
 1.文件cs231n/classifiers/linear_svm.py中：
+
+依据：[【学习笔记】cs231n-assignment1-SVM](https://blog.csdn.net/KammyIsTheBest/article/details/80233434)
 
 函数svm_loss_naive：由于要修改框外的部分代码，这里直接贴出修改后的整个函数
 
