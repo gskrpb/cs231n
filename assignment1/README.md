@@ -1,3 +1,5 @@
+# cs231n-Spring2019-assignment1
+
 部分作业的关键代码的参考答案在assignment2的cs231n/layers.py里面
 
 assignment1主要是图片分类的几个算法：
@@ -12,13 +14,13 @@ kNN算法很简单，就两步：
 
 3.k是超参数，可以通过在验证集上cross-validation得出。
 
-开头几块代码都是在导入包、导入数据、展示数据、预处理数据（将数据由3维图像拉成1维向量）。
+开头几块代码都是在导入包、导入数据（训练集5000，测试集500）、展示数据、预处理数据（将数据由3维图像拉成1维向量）。
 
 之后是训练模型（一瞬间的事）。
 
 接下来是测试模型。在不能使用np.linalg.norm()的情况下，要计算一组测试数据和一组训练集数据的距离，并且从其中找出对于每个测试数据最小的k个距离（排序取k个）。
 
-作业中要求我们分别用两个循环、一个循环、不用循环三种方式计算距离。在k_nearest_neighbor.py文件中补充完整这三个函数。
+作业中要求我们分别用两个循环、一个循环、不用循环三种方式计算距离。在cs231n/classifiers/k_nearest_neighbor.py文件中补充完整这三个函数。
 
 答案：
 
@@ -38,7 +40,7 @@ kNN算法很简单，就两步：
     dists=t_2xy+t_x2+t_y2
     dists=np.sqrt(dists)
 
-之后还需要把k_nearest_neighbor.py文件中的predict_labels函数补充完整：
+之后还需要把cs231n/classifiers/k_nearest_neighbor.py文件中的predict_labels函数补充完整：
 
 答案：
 
@@ -81,7 +83,7 @@ kNN算法很简单，就两步：
 
 得到的测试集准确率：accuracy: 0.282000
 
-p.s.还有几个Inline Question
+p.s.Inline Question
 
 **Inline Question 1** 
 
@@ -135,4 +137,143 @@ $\color{blue}{\textit Your Explanation:}$The decision boundary of the k-NN class
 2.kNN实在是太菜了，这就是个介绍而已。
 
 
-二、
+二、Multiclass Support Vector Machine（支持向量机SVM）
+
+0.导入数据
+
+1.拆数据：50000训练集->49000训练集、1000验证集、500发展集（49000训练集随机选择），10000测试集->1000测试集
+
+2.3维拉成1维
+
+3.将所有数据减去训练集图片平均值，并在最后加上一列代表偏置的1（这样，权重矩阵W作用与修正后的数据上时就自带偏置了）
+
+作业部分：
+
+1.文件cs231n/classifiers/linear_svm.py中：
+
+函数svm_loss_naive：由于要修改框外的部分代码，这里直接贴出修改后的整个函数
+
+    dW = np.zeros(W.shape) # initialize the gradient as zero
+
+    # compute the loss and the gradient
+    num_classes = W.shape[1]
+    num_train = X.shape[0]
+    loss = 0.0
+    for i in range(num_train):
+        scores = X[i].dot(W)
+        correct_class_score = scores[y[i]]
+        for j in range(num_classes):
+            if j == y[i]:
+                continue
+            margin = scores[j] - correct_class_score + 1 # note delta = 1
+            if margin > 0:
+                loss += margin
+                dW[:,y[i]] += -X[i,:].T
+                dW[:,j] += X[i,:].T
+
+
+    # Right now the loss is a sum over all training examples, but we want it
+    # to be an average instead so we divide by num_train.
+    loss /= num_train
+
+    # Add regularization to the loss.
+    loss += reg * np.sum(W * W)
+    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+
+    dW /= num_train
+    dW += reg * W
+
+    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    return loss, dW
+    
+函数svm_loss_vectorized：
+
+前一部分：
+
+    scores_matrix = X.dot(W)
+    correct_scores_matrix = scores_matrix[np.arange(num_train),y]
+    correct_scores_matrix = np.reshape(correct_scores_matrix, (num_train,-1))
+    margin_matrix = scores_matrix - correct_scores_matrix + 1
+    margin_matrix = np.maximum(0, margin_matrix)
+    margin_matrix[np.arange(num_train),y] = 0
+    loss += np.sum(margin_matrix) / num_train
+    loss += reg * np.sum(W * W)
+
+后一部分：
+
+    margin_matrix[margin_matrix>0] = 1
+    row_sum = np.sum(margin_matrix, axis=1)
+    margin_matrix[np.arange(num_train), y] = -row_sum.T
+    dW = np.dot(X.T,margin_matrix)
+    dW /= num_train
+    dW += reg * W
+
+2.文件cs231n/classifiers/linear_classifier.py中：
+
+第一部分：
+
+    batch_index = np.random.choice(num_train, batch_size)
+    X_batch = X[batch_index,:]
+    y_batch = y[batch_index]
+
+第二部分：
+
+    self.W -= learning_rate * grad
+
+第三部分：
+
+    y_pred += np.argmax(X.dot(self.W), axis=1)
+
+完成补充之后，就是训练，画图，训练超参数了（随便取超参数训练一次可以得到训练时间：约4s）：
+
+如果希望认真的计较，那就用for循环随机取超参数（对数）的办法，然后把图画出来，就可以很容易渐渐缩小超参数的范围：
+
+    rng = np.random.default_rng()
+    learning_rates = 10**(-0.3 * rng.random(10,) - 6.7) 
+    regularization_strengths = 10**(0.1 * rng.random(5,) + 4.0) 
+
+    results = {}
+    best_val = -1   # The highest validation accuracy that we have seen so far.
+    best_svm = None # The LinearSVM object that achieved the highest validation rate.
+
+    for learning_rate in learning_rates:
+        for regularization_strength in regularization_strengths:
+            #print('lr:',learning_rate,'; reg:', regularization_strength)
+            svm = LinearSVM()
+            loss_hist = svm.train(X_train, y_train, learning_rate=learning_rate, reg=regularization_strength, num_iters=1500, verbose=True)
+            y_train_pred = svm.predict(X_train)
+            y_val_pred = svm.predict(X_val)
+            y_train_acc = np.mean(y_train_pred==y_train)
+            y_val_acc = np.mean(y_val_pred==y_val)
+            results[(learning_rate, regularization_strength)] = [y_train_acc, y_val_acc]
+            if y_val_acc > best_val:
+                best_val = y_val_acc
+                best_svm = svm
+
+但是如果只是图省事，达到0.39准确率的要求就行，那么在我的经验中，lr=1.5e-7,reg=1.1e+4附近试几次就总是可以找到合适的点了。
+
+p.s.Inline Question
+
+**Inline Question 1**
+
+It is possible that once in a while a dimension in the gradcheck will not match exactly. What could such a discrepancy be caused by? Is it a reason for concern? What is a simple example in one dimension where a gradient check could fail? How would change the margin affect of the frequency of this happening? *Hint: the SVM loss function is not strictly speaking differentiable*
+
+$\color{blue}{\textit Your Answer:}$ It is possible, when the loss function is not strictly differentiable. Then, the left differentiation and right differentiation may not be equal at every point on the function, hence the numerical gradient may differ quite a lot from analytic gradient. 
+
+**Inline question 2**
+
+Describe what your visualized SVM weights look like, and offer a brief explanation for why they look they way that they do.
+
+$\color{blue}{\textit Your Answer:}$ There are some characteristics to describe, yet few can be easily discern. Relatively easy to confirm is that the frog weight looks green in the middle, the horse weight looks red in the middle and upper, the car weight looks like a red car pointing to the bottom left and the plane weight looks blue on the whole. This result may be due to that planes are white and their background are usually the blue sky, frogs are usually green, horses are u, the cars in the dataset are mostly in red and pointing to the bottom left.
+
+总结：
+
+1.向量化运算的优势再次显现，svm向量化比非向量化循环快20-50倍。
+
+2.超参数选择是个很头疼的问题，虽然随机对数选择是很好的方式，但是在同时选择两个及以上超参数的时候，要尝试的组合会非常多，非常耗时。
+
+3.svm在图像分类上的准确率并不算高。
+
+
+三、
